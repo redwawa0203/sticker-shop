@@ -337,9 +337,11 @@ export default function App() {
           className="flex items-center gap-2 cursor-pointer" 
           onClick={() => setView('home')}
         >
-          <div className="bg-pink-100 p-2 rounded-full">
-            <Store className="w-6 h-6 text-pink-500" />
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-12 h-12 object-contain rounded-full border-2 border-pink-100" 
+          />
           <span className="font-bold text-xl text-gray-800 tracking-wide">
             Irene<span className="text-pink-500">.Stickers</span>
           </span>
