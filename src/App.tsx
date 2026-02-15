@@ -47,7 +47,40 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = 'irene-shop';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+// --- Helper: Convert Web URL to App URL ---
+const getSmartLineLink = (url: string) => {
+  if (!url) return '#';
+  
+  try {
+    // 如果本來就已經是短網址 (line.me)，就直接回傳
+    if (url.includes('line.me/S/')) return url;
+
+    // 處理貼圖 (Sticker)
+    const stickerMatch = url.match(/stickershop\/product\/(\d+)/);
+    if (stickerMatch && stickerMatch[1]) {
+      return `https://line.me/S/sticker/${stickerMatch[1]}`;
+    }
+
+    // 處理表情貼 (Emoji)
+    const emojiMatch = url.match(/emojishop\/product\/([a-zA-Z0-9]+)/);
+    if (emojiMatch && emojiMatch[1]) {
+      return `https://line.me/S/emoji/${emojiMatch[1]}`;
+    }
+
+    // 處理主題 (Theme)
+    const themeMatch = url.match(/themeshop\/product\/([a-zA-Z0-9-]+)/);
+    if (themeMatch && themeMatch[1]) {
+      return `https://line.me/S/shop/theme/detail?id=${themeMatch[1]}`;
+    }
+
+    // 如果都不是，就回傳原本的網址
+    return url;
+  } catch (e) {
+    return url;
+  }
+};
 
 // --- Types ---
 type CategoryType = 'sticker' | 'theme' | 'emoji';
@@ -116,10 +149,8 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. 監聽 Firestore 資料 (改為讀取 Public Data)
+  // 2. 監聽 Firestore 資料
   useEffect(() => {
-    // 即使沒登入也嘗試讀取，但為了安全通常還是等 auth ready
-    // 這裡改用 'public/data/allStickers' 讓所有人共享資料
     const q = query(
       collection(db, 'artifacts', appId, 'public', 'data', 'allStickers')
     );
@@ -134,14 +165,10 @@ export default function App() {
       setStickers(loadedStickers);
     }, (error) => {
       console.error("Error fetching stickers:", error);
-      if (error.code === 'permission-denied') {
-        // 這會提示你去設定 Firestore Rules
-        alert("權限不足！請去 Firebase Console -> Firestore Database -> Rules 貼上我提供的規則設定。");
-      }
     });
 
     return () => unsubscribe();
-  }, []); // 移除 [user] 依賴，讓任何人都能觸發讀取
+  }, []); 
 
   // --- Utility: Resize Image to Base64 ---
   const handleImageUpload = (file: File, setter: (val: string) => void) => {
@@ -195,12 +222,10 @@ export default function App() {
 
   const handleAddSticker = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 雖然寫入需要 auth，但因為我們開啟了 anonymous，user 應該是存在的
     if (!newTitle || !newImage) return;
 
     setIsSubmitting(true);
     try {
-      // 寫入到 Public 區域
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'allStickers'), {
         title: newTitle,
         imageUrl: newImage,
@@ -337,11 +362,10 @@ export default function App() {
           className="flex items-center gap-2 cursor-pointer" 
           onClick={() => setView('home')}
         >
-          <img 
-            src="/logo.png" 
-            alt="Logo" 
-            className="w-12 h-12 object-contain rounded-full border-2 border-pink-100" 
-          />
+          {/* Logo 區域 */}
+          <div className="bg-pink-100 p-2 rounded-full">
+            <Store className="w-6 h-6 text-pink-500" />
+          </div>
           <span className="font-bold text-xl text-gray-800 tracking-wide">
             Irene<span className="text-pink-500">.Stickers</span>
           </span>
@@ -445,7 +469,7 @@ export default function App() {
             {isAdmin && <p className="text-sm text-pink-400">請到後台新增</p>}
           </div>
         ) : (
-          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 animate-in fade-in zoom-in duration-500">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 animate-in fade-in zoom-in duration-500">
             {filteredStickers.map((sticker) => (
               <div 
                 key={sticker.id} 
@@ -488,7 +512,7 @@ export default function App() {
                 <div className="p-4 text-center bg-white rounded-b-2xl relative z-20">
                   <h3 className="font-bold text-gray-800 mb-3 truncate px-2">{sticker.title}</h3>
                   <a 
-                    href={sticker.storeUrl || '#'} 
+                    href={getSmartLineLink(sticker.storeUrl)} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center w-full gap-2 bg-[#00B900] hover:bg-[#009900] text-white py-2 px-4 rounded-xl font-bold transition-colors text-sm shadow-md shadow-green-100"
@@ -503,7 +527,7 @@ export default function App() {
         )}
       </div>
       <footer className="text-center py-8 text-gray-400 text-sm">
-        © 2025 Irene Sticker Shop. All rights reserved.
+        © 2026 花謬思汀的貼圖花園。保留所有權利。
       </footer>
     </div>
   );
