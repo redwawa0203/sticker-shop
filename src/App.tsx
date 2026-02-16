@@ -63,10 +63,10 @@ const getSmartLineLink = (url: string) => {
       return `https://line.me/S/sticker/${stickerMatch[1]}`;
     }
 
-    // 處理表情貼 (Emoji)
+    // 處理表情貼 (Emoji) - 修正：改用 ?id= 格式以確保手機跳轉
     const emojiMatch = url.match(/emojishop\/product\/([a-zA-Z0-9]+)/);
     if (emojiMatch && emojiMatch[1]) {
-      return `https://line.me/S/emoji/${emojiMatch[1]}`;
+      return `https://line.me/S/emoji/?id=${emojiMatch[1]}`;
     }
 
     // 處理主題 (Theme)
@@ -469,7 +469,7 @@ export default function App() {
             {isAdmin && <p className="text-sm text-pink-400">請到後台新增</p>}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 animate-in fade-in zoom-in duration-500">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-in fade-in zoom-in duration-500">
             {filteredStickers.map((sticker) => (
               <div 
                 key={sticker.id} 
