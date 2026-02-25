@@ -47,7 +47,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const appId = 'irene-stickershop-v1';
 
 // --- Helper: Convert Web URL to App URL ---
 const getSmartLineLink = (url: string) => {
